@@ -1,0 +1,11 @@
+README - 2012/01/15, Matt Hackmann
+
+A simple PHP framework for creating scripts to automate reddit user actions (bots).
+
+Files
+-----------------------------------
+index.php				The bot boostrapper. It runs all bots enabled in the database
+reddit.php				The reddit wrapper class. Has methods for performing various user related tasks
+lib.pdo.php				Simple PDO wrapper
+reddit_bots.sql			SQL create scripts for reddit_bots table. Also includes sample bot, binky81
+bots/bot.binky81.php	Sample bot script
