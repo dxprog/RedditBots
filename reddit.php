@@ -114,6 +114,20 @@ class RedditBot {
 	}
 	
 	/**
+	 * Reports on a reddit object (e.g. comment, post, link)
+	 * @param string $id The thing to report, e.g. t3_203xa
+	 * @return boolean Returns whether the thing was reported successfully
+	 */
+	public function Report($id) {
+		$retVal = false;
+		$obj = $this->_doPost('report/', array('id'=>$id, 'uh'=>$this->_hash), $this->_cookie);
+		if ($obj == '{}') {
+			$retVal = true;
+		}
+		return $retVal;
+	}
+	
+	/**
 	 * Retrieves the underlying data object for any reddit page
 	 * @param string $page The page to get. Ex: 'r/anime' returns the data object for the anime subreddit
 	 * @return object Returns the data object retrieved
