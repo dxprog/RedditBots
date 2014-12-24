@@ -68,7 +68,7 @@ class RedditBot {
 	 */
 	private function _login() {
 		$retVal = false;
-		$obj = $this->_doPost('login/' . $this->_userName, array('user'=>$this->_userName, 'passwd'=>$this->_password, 'api_type'=>'json'));
+		$obj = $this->_doAction('api/login/' . $this->_userName, array('user'=>$this->_userName, 'passwd'=>$this->_password, 'api_type'=>'json'));
 		if (is_string($obj)) {
 			$obj = json_decode($obj);
 			if (is_object($obj) && count($obj->json->errors) == 0) {
@@ -89,7 +89,7 @@ class RedditBot {
 	 */
 	public function Vote($direction, $id, $type) {
 		$retVal = false;
-		$obj = $this->_doPost('vote/', array('id'=>'t' . $type . '_' . $id, 'dir'=>$direction, 'uh'=>$this->_hash), $this->_cookie);
+		$obj = $this->_doAction('api/vote/', array('id'=>'t' . $type . '_' . $id, 'dir'=>$direction, 'uh'=>$this->_hash), $this->_cookie);
 		echo $obj;
 		if ($obj == '{}') {
 			$retVal = true;
@@ -106,7 +106,7 @@ class RedditBot {
 	 */
 	public function Comment($text, $id, $type) {
 		$retVal = false;
-		$obj = $this->_doPost('comment/', array('thing_id'=>'t' . $type . '_' . $id, 'text'=>$text, 'uh'=>$this->_hash), $this->_cookie);
+		$obj = $this->_doAction('api/comment/', array('thing_id'=>'t' . $type . '_' . $id, 'text'=>$text, 'uh'=>$this->_hash), $this->_cookie);
 		if (is_string($obj)) {
 			$retVal = strpos($obj, 'contentHTML') !== false;
 		}
@@ -120,7 +120,7 @@ class RedditBot {
 	 */
 	public function Report($id) {
 		$retVal = false;
-		$obj = $this->_doPost('report/', array('id'=>$id, 'uh'=>$this->_hash), $this->_cookie);
+		$obj = $this->_doAction('api/report/', array('id'=>$id, 'uh'=>$this->_hash), $this->_cookie);
 		if ($obj == '{}') {
 			$retVal = true;
 		}
@@ -128,13 +128,15 @@ class RedditBot {
 	}
 	
 	/**
-	 * Retrieves the underlying data object for any reddit page
-	 * @param string $page The page to get. Ex: 'r/anime' returns the data object for the anime subreddit
+	 * Updated GetPageListing to be more generic, sends your cookie using cURL so you get your results, not the general result
+	 * @param string $page The page to get. Ex: 'r/anime' returns the data object for the anime subreddit; '/message/inbox' returns the data object from your inbox
 	 * @return object Returns the data object retrieved
 	 */
-	public function GetPageListing($page) {
+	
+	public function GetListing($page) {
 		$retVal = false;
-		$file = file_get_contents('http://www.reddit.com/' . $page . '.json');
+		$file = $this->_doAction($page,null,$this->_cookie);
+		
 		if (strlen($file) > 0) {
 			$obj = json_decode($file);
 			if (is_object($obj) && is_array($obj->data->children)) {
@@ -229,22 +231,25 @@ class RedditBot {
 	/**
 	 * Wrapper to perform an HTTP POST action to reddit. Requires the PHP cURL extension
 	 */
-	private function _doPost($url, $data, $cookie = false) {
+	private function _doAction($url, $data = null, $cookie = false) {
 		$retVal = false;
 		
-		$c = curl_init('http://www.reddit.com/api/' . $url);
+		$c = curl_init('http://www.reddit.com/'.$url.'.json');
 		if ($c) {
 			curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($c, CURLOPT_POST, true);
-			
-			$post = '';
-			foreach ($data as $key=>$value) {
-				$post .= $key . '=' . urlencode($value) . '&';
+			if (is_array($data)) {
+				curl_setopt($c, CURLOPT_POST, true);
+				
+				$post = '';
+				foreach ($data as $key=>$value) {
+					$post .= $key . '=' . urlencode($value) . '&';
+				}
+				$post = substr($post, 0, strlen($post) - 1);
+				
+				curl_setopt($c, CURLOPT_POSTFIELDS, $post);
+				curl_setopt($c, CURLINFO_HEADER_OUT, true);
 			}
-			$post = substr($post, 0, strlen($post) - 1);
 			
-			curl_setopt($c, CURLOPT_POSTFIELDS, $post);
-			curl_setopt($c, CURLINFO_HEADER_OUT, true);
 			if (false !== $cookie) {
 				curl_setopt($c, CURLOPT_COOKIE, 'reddit_session=' . $cookie);
 			}
