@@ -13,7 +13,7 @@ function runBinky81($bot) {
 	$retVal = false;
 
 	// Get all the front page posts from the XKCD subreddit
-	$posts = $bot->GetPageListing('r/xkcd/');
+	$posts = $bot->GetListing('r/xkcd/');
 	if (is_array($posts)) {
 		foreach ($posts as $post) {
 			// Ensure that the data we got back is clean, that we haven't posted on this link before,
